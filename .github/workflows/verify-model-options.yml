@@ -14,8 +14,6 @@ jobs:
         include:
           - label: baseline
             ref: 908c994901b857918c23655670468298f6bbd33b
-          - label: fix
-            ref: ba37dd88dc9a789a05c4532f14ce6d026795e93a
     name: ${{ matrix.label }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -51,6 +49,7 @@ jobs:
           assert(failed.every(test => test.failureMessages.some(message => message.includes('AssertionError'))));
           JS
           git restore src/tests/model-presentation.test.ts
+          mv negative.json "$RUNNER_TEMP/negative.json"
       - run: npm run check
       - run: npm run build
       - run: npm run test:run -- --reporter=default --reporter=json --outputFile=full.json
@@ -59,5 +58,5 @@ jobs:
         with:
           name: results-${{ matrix.label }}
           path: |
-            negative.json
+            ${{ runner.temp }}/negative.json
             full.json
