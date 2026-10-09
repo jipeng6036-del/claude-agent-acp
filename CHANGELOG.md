@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.89.0](https://github.com/agentclientprotocol/claude-agent-acp/compare/v0.88.0...v0.89.0) (2026-10-09)
+
+
+### Features
+
+* Support custom instructions for agent sessions via meta ([#1177](https://github.com/agentclientprotocol/claude-agent-acp/issues/1177)) ([908c994](https://github.com/agentclientprotocol/claude-agent-acp/commit/908c994901b857918c23655670468298f6bbd33b))
+
+
+### Bug Fixes
+
+* recreate live sessions on logout when it clears a provider or gateway override ([#1278](https://github.com/agentclientprotocol/claude-agent-acp/issues/1278)) ([966be7a](https://github.com/agentclientprotocol/claude-agent-acp/commit/966be7abe60435f2f1c6379a5255ea7d533a1a20))
+
 ## [0.88.0](https://github.com/agentclientprotocol/claude-agent-acp/compare/v0.87.0...v0.88.0) (2026-10-08)
 
 
