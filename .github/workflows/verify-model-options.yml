@@ -1,0 +1,63 @@
+name: Verify model option labels
+on:
+  push:
+    branches: [verify/1246-model-options]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: baseline
+            ref: 908c994901b857918c23655670468298f6bbd33b
+          - label: fix
+            ref: ba37dd88dc9a789a05c4532f14ce6d026795e93a
+    name: ${{ matrix.label }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ matrix.ref }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "lts/*"
+          cache: npm
+      - run: npm ci
+      - name: Confirm regression against the original implementation
+        if: matrix.label == 'baseline'
+        shell: bash
+        run: |
+          git show ba37dd88dc9a789a05c4532f14ce6d026795e93a:src/tests/model-presentation.test.ts > src/tests/model-presentation.test.ts
+          set +e
+          npx vitest run src/tests/model-presentation.test.ts --reporter=default --reporter=json --outputFile=negative.json
+          status=$?
+          set -e
+          test "$status" -eq 1
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const report = JSON.parse(fs.readFileSync('negative.json', 'utf8'));
+          const failed = report.testResults.flatMap(file => file.assertionResults).filter(test => test.status === 'failed');
+          assert.equal(failed.length, 2);
+          assert.deepEqual(failed.map(test => test.title).sort(), [
+            'distinguishes allowlisted aliases and pins that inherit the same SDK label',
+            'distinguishes identical custom labels without changing their model IDs',
+          ].sort());
+          assert(failed.every(test => test.failureMessages.some(message => message.includes('AssertionError'))));
+          JS
+          git restore src/tests/model-presentation.test.ts
+      - run: npm run check
+      - run: npm run build
+      - run: npm run test:run -- --reporter=default --reporter=json --outputFile=full.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: results-${{ matrix.label }}
+          path: |
+            negative.json
+            full.json
